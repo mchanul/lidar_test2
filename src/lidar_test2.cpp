@@ -34,8 +34,8 @@ Quaternion eulerToQuaternion(double yaw) {
 void lidarCallback(const sensor_msgs::LaserScan::ConstPtr& lidar_msg)
 {
     // 왼쪽 라이다
-    double min_left_angle = -1.0471975512; // 최소 각도
-    double max_left_angle = -0.2617993878;  // 최대 각도
+    double min_left_angle =  0.2617993878;// 최소 각도
+    double max_left_angle = 1.0471975512;  // 최대 각도
 
     int min_left_index = (min_left_angle - lidar_msg->angle_min) / lidar_msg->angle_increment;
     int max_left_index = (max_left_angle - lidar_msg->angle_min) / lidar_msg->angle_increment;
@@ -62,8 +62,8 @@ void lidarCallback(const sensor_msgs::LaserScan::ConstPtr& lidar_msg)
 
 
     // 오른쪽 라이다
-    double min_right_angle = 0.2617993878; // 최소 각도
-    double max_right_angle = 1.0471975512;  // 최대 각도
+    double min_right_angle = -0.2617993878; // 최소 각도
+    double max_right_angle = -1.0471975512;  // 최대 각도
 
     int min_right_index = (min_right_angle - lidar_msg->angle_min) / lidar_msg->angle_increment;
     int max_right_index = (max_right_angle - lidar_msg->angle_min) / lidar_msg->angle_increment;
@@ -157,7 +157,7 @@ void lidarCallback(const sensor_msgs::LaserScan::ConstPtr& lidar_msg)
         }
     }    
 
-    if (min_center_distance < 2.8)
+    if (min_center_distance < 2.2)
     {
         std::cout << "Center Lidar detects obstacle." << std::endl;
         lidar_center = true; // 중앙 라이다 감지 여부 업데이트
@@ -233,8 +233,8 @@ int main(int argc, char** argv)
     double angle_s = sin(a_total * M_PI / 180.0);
     double angle_c = cos(a_total * M_PI / 180.0);
 
-    double v_x = 20 * angle_c;
-    double v_y = 20 * angle_s;
+    double v_x = 15 * angle_c;
+    double v_y = 15 * angle_s;
 
     /////////////////////////////////////////
 
@@ -243,8 +243,8 @@ int main(int argc, char** argv)
     double angle_rs = sin(reversea_total * M_PI / 180.0);
     double angle_rc = cos(reversea_total * M_PI / 180.0);
 
-    double rv_x = 20 * angle_rc;
-    double rv_y = 20 * angle_rs;
+    double rv_x = 15 * angle_rc;
+    double rv_y = 15 * angle_rs;
 
     ////////////////////////////////////
 
@@ -253,8 +253,8 @@ int main(int argc, char** argv)
     double  angle_cs = sin(center_total * M_PI / 180.0);
     double  angle_cc = cos(center_total * M_PI / 180.0);
 
-    double  cv_x = 30 * angle_cc;
-    double  cv_y = 30 * angle_cs;
+    double  cv_x = 15 * angle_cc;
+    double  cv_y = 15 * angle_cs;
 
 
 
@@ -271,27 +271,27 @@ int main(int argc, char** argv)
 
         if (conditionMetOnce)
         {
-            if (lidar_left )
-            {
-                ROS_WARN("Left Lidar alarm triggered! Obstacle detected.");
-                
-                geometry_msgs::Twist velocity_msg;
-
-                velocity_msg.linear.x = v_x; // avoid
-                velocity_msg.linear.y = v_y;
-                velocity_msg.linear.z = 0.2;
-                
-                velocity_pub.publish(velocity_msg);
-            }
-            else if (lidar_right)
+            if (lidar_right )
             {
                 ROS_WARN("Right Lidar alarm triggered! Obstacle detected.");
                 
                 geometry_msgs::Twist velocity_msg;
 
+                velocity_msg.linear.x = v_x; // avoid
+                velocity_msg.linear.y = v_y;
+                velocity_msg.linear.z = 0.0;
+                
+                velocity_pub.publish(velocity_msg);
+            }
+            else if (lidar_left)
+            {
+                ROS_WARN("Left Lidar alarm triggered! Obstacle detected.");
+                
+                geometry_msgs::Twist velocity_msg;
+
                 velocity_msg.linear.x = rv_x; // avoid
                 velocity_msg.linear.y = rv_y;
-                velocity_msg.linear.z = 0.2;
+                velocity_msg.linear.z = 0.0;
                 
                 velocity_pub.publish(velocity_msg);
             }
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
 
                 velocity_msg.linear.x = cv_x;
                 velocity_msg.linear.y= cv_y;
-                velocity_msg.linear.z= 0.4;
+                velocity_msg.linear.z= 0.0;
 
                 velocity_pub.publish(velocity_msg);
             }
