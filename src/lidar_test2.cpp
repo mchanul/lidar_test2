@@ -106,7 +106,7 @@ void lidarCallback(const sensor_msgs::LaserScan::ConstPtr& lidar_msg)
 
     if(min_endright_distance < 2.0)
     {
-        std::cout << "end right detect" << std::endl;
+        //std::cout << "end right detect" << std::endl;
         lidar_endright = true;
     }
     else
@@ -132,7 +132,7 @@ void lidarCallback(const sensor_msgs::LaserScan::ConstPtr& lidar_msg)
 
     if(min_endleft_distance < 2.0)
     {
-        std::cout << "end left detect" << std::endl;
+        //std::cout << "end left detect" << std::endl;
         lidar_endleft = true;
     }
     else
@@ -207,7 +207,8 @@ int main(int argc, char** argv)
 
     double position_x=0, position_y=0, position_z=3;
     double distance = 0;
-    
+    double land_z;
+
     double velocity_x = 0.0, velocity_y = 0.0, velocity_z = 0.0; // 초기값 설정
 
     std::cout << "Enter distance(m): ";
@@ -215,6 +216,9 @@ int main(int argc, char** argv)
 
     std::cout << "Enter position z: ";
     std::cin >> position_z;
+
+    std::cout << "LAND position z: ";
+    std::cin >> land_z;
 
     double ddx = result_degrees * M_PI / 180.0; 
     double ddy = result_degrees * M_PI / 180.0;
@@ -252,9 +256,20 @@ int main(int argc, char** argv)
     double  cv_x = 30 * angle_cc;
     double  cv_y = 30 * angle_cs;
 
+
+
+    bool conditionMetOnce = false;
+
     while (ros::ok())
     {
-        if (fabs(current_pose.pose.position.z - position_z) < 0.5)
+        if (!conditionMetOnce) {
+            // 조건을 체크해서 참이면 플래그를 설정
+            if (fabs(current_pose.pose.position.z - position_z) < 0.5) {
+            conditionMetOnce = true;
+            }
+        }
+
+        if (conditionMetOnce)
         {
             if (lidar_left )
             {
@@ -313,22 +328,22 @@ int main(int argc, char** argv)
                 setpoint_pub.publish(pose_msg);
 
                 // 이 부분에서 x_l, y_l, position_z에 도달했을 때 "COMPLEX" 메시지 출력
-                if (fabs(current_pose.pose.position.x - x_l) < 0.3 && 
-                    fabs(current_pose.pose.position.y - y_l) < 0.3)
+                if (fabs(current_pose.pose.position.x - x_l) < 0.4 && 
+                    fabs(current_pose.pose.position.y - y_l) < 0.4)
                 {
                     geometry_msgs::PoseStamped pose_msg;
 
-                    position_z = 1.0;
+                    
                     pose_msg.pose.position.x = x_l;
                     pose_msg.pose.position.y = y_l;
-                    pose_msg.pose.position.z = position_z;
+                    pose_msg.pose.position.z = land_z;
 
                     pose_msg.pose.orientation.x = quat.x;
                     pose_msg.pose.orientation.y = quat.y;
                     pose_msg.pose.orientation.z = quat.z;
                     pose_msg.pose.orientation.w = quat.w;                                
 
-                    ROS_INFO("land");
+                    ROS_INFO("COMPLEX land");
                     setpoint_pub.publish(pose_msg);
                 }
             }
