@@ -192,6 +192,13 @@ int main(int argc, char** argv)
 
     ros::Rate rate(20);
 
+
+    double origin_x=0, origin_y=0;
+
+    /*std::cout << "Origin locatioin input (base position is new terminel input cmd (rostopic echo /mavros/local_position/pose)), (x , y):" ;
+    std::cin >> origin_x >> origin_y;*/
+
+
     double yaw_degrees;
     double tt = 90;
     std::cout << "eular degrees (yaw) input : ";
@@ -201,6 +208,9 @@ int main(int argc, char** argv)
     double yaw_radians = result_degrees * M_PI / 180.0; // 라디안으로 변환
 
     Quaternion quat = eulerToQuaternion(yaw_radians);
+
+
+
 
     std::cout << "ENU quaternion: ";
     std::cout << "x: " << quat.x << ", y: " << quat.y << ", z: " << quat.z << ", w: " << quat.w << std::endl;
@@ -214,17 +224,17 @@ int main(int argc, char** argv)
     std::cout << "Enter distance(m): ";
     std::cin >> distance;
 
-    std::cout << "Enter position z: ";
+    std::cout << "Enter position z(1.2m<z): ";
     std::cin >> position_z;
 
-    std::cout << "LAND position z: ";
+    std::cout << "LAND position z(1m<z): ";
     std::cin >> land_z;
 
     double ddx = result_degrees * M_PI / 180.0; 
     double ddy = result_degrees * M_PI / 180.0;
 
-    double x_l = distance * cos(ddx);
-    double y_l = distance * sin(ddy);
+    double x_l = (origin_x+distance) * cos(ddx);
+    double y_l = (origin_y+distance) * sin(ddy);
 
     ////////////////////////////////////////
 
@@ -269,9 +279,12 @@ int main(int argc, char** argv)
             }
         }
 
+        // 현재의 z 높이를 체크하여 1m 이상인 경우에만 조건을 검사합니다.
+        bool is_above_one_meter = current_pose.pose.position.z >= 0.8;
+
         if (conditionMetOnce)
         {
-            if (lidar_right )
+            if (lidar_right && is_above_one_meter)
             {
                 ROS_WARN("Right Lidar alarm triggered! Obstacle detected.");
                 
@@ -283,7 +296,7 @@ int main(int argc, char** argv)
                 
                 velocity_pub.publish(velocity_msg);
             }
-            else if (lidar_left)
+            else if (lidar_left && is_above_one_meter)
             {
                 ROS_WARN("Left Lidar alarm triggered! Obstacle detected.");
                 
@@ -295,7 +308,7 @@ int main(int argc, char** argv)
                 
                 velocity_pub.publish(velocity_msg);
             }
-            else if (lidar_center)
+            else if (lidar_center && is_above_one_meter)
             {
 
                 ROS_WARN("center Lidar alarm triggered! Obstacle detected.");
@@ -345,6 +358,8 @@ int main(int argc, char** argv)
 
                     ROS_INFO("COMPLEX land");
                     setpoint_pub.publish(pose_msg);
+
+
                 }
             }
         }
